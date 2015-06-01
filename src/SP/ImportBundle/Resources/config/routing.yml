@@ -1,0 +1,3 @@
+sp_import_homepage:
+    path:     /
+    defaults: { _controller: SPImportBundle:Default:index }

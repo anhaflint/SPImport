@@ -1,0 +1,4 @@
+sp_import:
+    resource: "@SPImportBundle/Resources/config/routing.yml"
+    prefix:   /
+

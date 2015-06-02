@@ -28,6 +28,11 @@ package { ["php5-common", "libapache2-mod-php5", "php5-cli", "php-apc", "php5-my
   require => [Exec["apt-get update"], Package['mysql-client'], Package['apache2']],
 }
 
+package {["curl", "php5-curl", "libcurl3", "php5-fpm", "php5-suhosin", "php-pear"]:
+  ensure => installed,
+  require => Exec["apt-get update"],
+}
+
 exec { "/usr/sbin/a2enmod rewrite" :
   unless => "/bin/readlink -e /etc/apache2/mods-enabled/rewrite.load",
   notify => Service[apache2],

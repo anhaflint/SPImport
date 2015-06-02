@@ -1,4 +1,11 @@
+parameters:
+    supplier1import.name:       "Encore"
+    supplier1import.url:        "https://%supplier1import.usr%:%supplier1import.pwd%@api.entstix.com/api/v1/xlive/content/"
+    supplier1import.pwd:        "wev3WugejuPakeHA"
+    supplier1import.usr:        "Theatreticketscheap"
+    supplier1import.id:         1
+
 services:
-#    sp_import.example:
-#        class: SP\ImportBundle\Example
-#        arguments: [@service_id, "plain_value", %parameter%]
+    sp1.import:
+        class: SP\ImportBundle\Entity\Supplier1Import
+        arguments: [%supplier1import.name%, %supplier1import.url%, %supplier1import.pwd%, %supplier1import.usr%, %supplier1import.id%]

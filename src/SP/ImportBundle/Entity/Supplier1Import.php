@@ -75,7 +75,7 @@ class Supplier1Import extends XMLImport
 
         //Add each link to multi handle to be requested asynchronously
         foreach ($urlList as $key => $url) {
-            if($key <= 10) {
+            if($key <= 15) {
 
                 //get url attributes to query
                 $href = self::getOneVenueRequestUrl($url->textContent);
@@ -125,6 +125,11 @@ class Supplier1Import extends XMLImport
                 //Get Transport Info
                 $railStation = $this->getNode($xPathVenue, "//transportInfo/railStation");
                 $congestion = ($this->getNode($xPathVenue, "//transportInfo/inCongestionZone") !== null && $this->getNode($xPathVenue, "//transportInfo/inCongestionZone") === "yes") ? true : false;
+                $nearestTube = $this->getNode($xPathVenue, "//transportInfo/nearestTube");
+                $tubeDirection = $this->getNode($xPathVenue, "//transportInfo/tubeDirection");
+                $busRoutes = $this->getNode($xPathVenue, "//transportInfo/busRoutes");
+                $nightRoutes = $this->getNode($xPathVenue, "//transportInfo/nightRoutes");
+                $carPark = $this->getNode($xPathVenue, "//transportInfo/carPark");
 
                 //Venue ID
                 $venueId = explode('/', $this->getNode($xPathVenue, '//venue/@href'));
@@ -144,7 +149,12 @@ class Supplier1Import extends XMLImport
                         $latitude,
                         $longitude,
                         $resources,
+                        $nearestTube,
+                        $tubeDirection,
                         $railStation,
+                        $busRoutes,
+                        $nightRoutes,
+                        $carPark,
                         $congestion);
                 } else {
                     //Create a new entry if it doesn't already exist
@@ -158,7 +168,12 @@ class Supplier1Import extends XMLImport
                         $latitude,
                         $longitude,
                         $resources,
+                        $nearestTube,
+                        $tubeDirection,
                         $railStation,
+                        $busRoutes,
+                        $nightRoutes,
+                        $carPark,
                         $congestion);
                 }
                 $this->em->persist($venue);

@@ -29,7 +29,7 @@ class Supplier1Import extends XMLImport
 
     //============= Importer Methods ===============
 
-    public function getAllVenues() {
+    public function getVenues( $id = null ) {
         //init curl multi handle
         $mh = curl_multi_init();
         $optArray = array(
@@ -53,7 +53,15 @@ class Supplier1Import extends XMLImport
         $xPathDocument = new \DOMXPath($domDocument);
 
         //Get url list
-        if( !($urlList = $xPathDocument->query("//venue/@href")) ) {
+        if($id !== null && !is_integer($id)) {
+            throw new \Exception('Error : The requested $id must be an integer');
+        } elseif ( $id !== null && is_integer($id)) {
+            $urlList = $xPathDocument->query('//venue[contains(@href, "' . $id . '")]/@href');
+        } elseif ( $id === null ) {
+            $urlList = $xPathDocument->query('//venue/@href');
+        }
+
+        if( !$urlList ) {
             throw new \Exception('Error querying venues : invalid query');
         }
 
@@ -137,7 +145,7 @@ class Supplier1Import extends XMLImport
 
     }
 
-    public function getAllProductions() {
+    public function getProductions( $id = null ) {
         echo '<p>productions</p>';
     }
 

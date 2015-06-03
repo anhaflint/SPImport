@@ -87,9 +87,44 @@ class S1Venues
     /**
      * @var string
      *
+     * @ORM\Column(name="nearestTube", type="string", length=255, nullable=true)
+     */
+    private $nearestTube;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="tubeDirection", type="string", length=255, nullable=true)
+     */
+    private $tubeDirection;
+
+    /**
+     * @var string
+     *
      * @ORM\Column(name="railStation", type="string", length=255, nullable=true)
      */
     private $railStation;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="busRoutes", type="string", length=255, nullable=true)
+     */
+    private $busRoutes;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="nightRoutes", type="string", length=255, nullable=true)
+     */
+    private $nightRoutes;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="carPark", type="string", length=255, nullable=true)
+     */
+    private $carPark;
 
     /**
      * @var boolean
@@ -108,7 +143,12 @@ class S1Venues
         $latitude,
         $longitude,
         $resources,
+        $nearestTube,
+        $tubeDirection,
         $railStation,
+        $busRoutes,
+        $nightRoutes,
+        $carPark,
         $inCongestionZone
     ) {
         $this->venueId = $venueId;
@@ -122,6 +162,11 @@ class S1Venues
         $this->railStation = $railStation;
         $this->inCongestionZone = $inCongestionZone;
         $this->resources = $resources;
+        $this->nearestTube = $nearestTube;
+        $this->tubeDirection = $tubeDirection;
+        $this->busRoutes = $busRoutes;
+        $this->nightRoutes = $nightRoutes;
+        $this->carPark = $carPark;
         if(!is_array($resources) && $resources !== null) {
             $this->resources = array($resources);
         } elseif (is_array($resources)) {
@@ -131,16 +176,21 @@ class S1Venues
 
     public function update(
         $venueId,
-       $venueName,
-       $locationId,
-       $addressLine1,
-       $addressLine2,
-       $postCode,
-       $latitude,
-       $longitude,
-       $resources,
-       $railStation,
-       $inCongestionZone
+        $venueName,
+        $locationId,
+        $addressLine1,
+        $addressLine2,
+        $postCode,
+        $latitude,
+        $longitude,
+        $resources,
+        $nearestTube,
+        $tubeDirection,
+        $railStation,
+        $busRoutes,
+        $nightRoutes,
+        $carPark,
+        $inCongestionZone
     ) {
         $this->venueId = $venueId;
         $this->venueName = $venueName;
@@ -153,6 +203,11 @@ class S1Venues
         $this->railStation = $railStation;
         $this->inCongestionZone = $inCongestionZone;
         $this->resources = $resources;
+        $this->nearestTube = $nearestTube;
+        $this->tubeDirection = $tubeDirection;
+        $this->busRoutes = $busRoutes;
+        $this->nightRoutes = $nightRoutes;
+        $this->carPark = $carPark;
         if(!is_array($resources) && $resources !== null) {
             $this->resources = array($resources);
         } elseif (is_array($resources)) {
@@ -421,5 +476,143 @@ class S1Venues
     public function getInCongestionZone()
     {
         return $this->inCongestionZone;
+    }
+
+    /**
+     * Set resources
+     *
+     * @param array $resources
+     * @return S1Venues
+     */
+    public function setResources($resources)
+    {
+        $this->resources = $resources;
+
+        return $this;
+    }
+
+    /**
+     * Get resources
+     *
+     * @return array 
+     */
+    public function getResources()
+    {
+        return $this->resources;
+    }
+
+    /**
+     * Set nearestTube
+     *
+     * @param string $nearestTube
+     * @return S1Venues
+     */
+    public function setNearestTube($nearestTube)
+    {
+        $this->nearestTube = $nearestTube;
+
+        return $this;
+    }
+
+    /**
+     * Get nearestTube
+     *
+     * @return string 
+     */
+    public function getNearestTube()
+    {
+        return $this->nearestTube;
+    }
+
+    /**
+     * Set tubeDirection
+     *
+     * @param string $tubeDirection
+     * @return S1Venues
+     */
+    public function setTubeDirection($tubeDirection)
+    {
+        $this->tubeDirection = $tubeDirection;
+
+        return $this;
+    }
+
+    /**
+     * Get tubeDirection
+     *
+     * @return string 
+     */
+    public function getTubeDirection()
+    {
+        return $this->tubeDirection;
+    }
+
+    /**
+     * Set busRoutes
+     *
+     * @param string $busRoutes
+     * @return S1Venues
+     */
+    public function setBusRoutes($busRoutes)
+    {
+        $this->busRoutes = $busRoutes;
+
+        return $this;
+    }
+
+    /**
+     * Get busRoutes
+     *
+     * @return string 
+     */
+    public function getBusRoutes()
+    {
+        return $this->busRoutes;
+    }
+
+    /**
+     * Set nightRoutes
+     *
+     * @param string $nightRoutes
+     * @return S1Venues
+     */
+    public function setNightRoutes($nightRoutes)
+    {
+        $this->nightRoutes = $nightRoutes;
+
+        return $this;
+    }
+
+    /**
+     * Get nightRoutes
+     *
+     * @return string 
+     */
+    public function getNightRoutes()
+    {
+        return $this->nightRoutes;
+    }
+
+    /**
+     * Set carPark
+     *
+     * @param string $carPark
+     * @return S1Venues
+     */
+    public function setCarPark($carPark)
+    {
+        $this->carPark = $carPark;
+
+        return $this;
+    }
+
+    /**
+     * Get carPark
+     *
+     * @return string 
+     */
+    public function getCarPark()
+    {
+        return $this->carPark;
     }
 }

@@ -33,6 +33,9 @@ class Supplier1Import extends XMLImport
     //============= Importer Methods ===============
 
     public function getVenues( $id = null ) {
+        //Venues Repository
+        $venuesRepository = $this->em->getRepository('SPImportBundle:S1Venues');
+
         //init curl multi handle
         $mh = curl_multi_init();
         $optArray = array(
@@ -43,7 +46,6 @@ class Supplier1Import extends XMLImport
 
         //Get venue list
         $venues = $this->query($this->getUrl(), 'venue/', $optArray);
-
 
         //Generate Dom Document with venue list
         $domDocument = new \DOMDocument();
@@ -64,7 +66,7 @@ class Supplier1Import extends XMLImport
             $urlList = $xPathDocument->query('//venue/@href');
         }
 
-
+        // Error handling if there was a problem or the feed seems to be empty
         if( !$urlList ) {
             throw new \Exception('Error querying venues : invalid query');
         }  elseif ( $urlList->length == 0) {
@@ -128,19 +130,37 @@ class Supplier1Import extends XMLImport
                 $venueId = explode('/', $this->getNode($xPathVenue, '//venue/@href'));
                 $venueId = end($venueId);
 
-                $venue = new S1Venues(
-                    $venueId,
-                    $venueName,
-                    $locationId,
-                    $addressLine1,
-                    $addressLine2,
-                    $postCode,
-                    $latitude,
-                    $longitude,
-                    $resources,
-                    $railStation,
-                    $congestion);
-
+                //Check if entry already exists in DB
+                $venue = $venuesRepository->findOneBy(array('venueId' => $venueId));
+                if($venue !== null) {
+                    //Update the existing entry
+                    $venue->update(
+                        $venueId,
+                        $venueName,
+                        $locationId,
+                        $addressLine1,
+                        $addressLine2,
+                        $postCode,
+                        $latitude,
+                        $longitude,
+                        $resources,
+                        $railStation,
+                        $congestion);
+                } else {
+                    //Create a new entry if it doesn't already exist
+                    $venue = new S1Venues(
+                        $venueId,
+                        $venueName,
+                        $locationId,
+                        $addressLine1,
+                        $addressLine2,
+                        $postCode,
+                        $latitude,
+                        $longitude,
+                        $resources,
+                        $railStation,
+                        $congestion);
+                }
                 $this->em->persist($venue);
 
 

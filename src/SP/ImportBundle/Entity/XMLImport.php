@@ -13,18 +13,21 @@ abstract class XMLImport implements SupplierImportInterface
 
     /**
      * Returns all venues for the supplier
+     * Or just one if $id is defined
      *
+     * @param $id
      * @return mixed
      */
-    abstract public function getAllVenues();
+    abstract public function getVenues( $id = null );
 
 
     /**
      * Returns all productions for the supplier
-     *
+     * Or just one if $id is defined
+     * @param $id
      * @return mixed
      */
-    abstract public function getAllProductions();
+    abstract public function getProductions( $id = null );
 
     /**
      * Requests the given url

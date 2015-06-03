@@ -2,6 +2,7 @@
 
 namespace SP\ImportBundle\Entity;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -10,6 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Supplier1Import extends XMLImport
 {
+    private $em;
 
     private $name,
             $apiURL,
@@ -17,8 +19,9 @@ class Supplier1Import extends XMLImport
             $apiUsr,
             $supplierId;
 
-    public function __construct($name, $url, $pwd, $usr, $id)
+    public function __construct(EntityManager $em, $name, $url, $pwd, $usr, $id)
     {
+        $this->em = $em;
         $this->name = $name;
         $this->apiURL = $url;
         $this->apiPwd = $pwd;
@@ -61,20 +64,24 @@ class Supplier1Import extends XMLImport
             $urlList = $xPathDocument->query('//venue/@href');
         }
 
+
         if( !$urlList ) {
             throw new \Exception('Error querying venues : invalid query');
+        }  elseif ( $urlList->length == 0) {
+            throw new \Exception('Warning : the feed you are asking  for seems to be empty, please check the feed source ');
         }
 
         //Add each link to multi handle to be requested asynchronously
         foreach ($urlList as $key => $url) {
-            //get url attributes to query
-            $href = self::getOneVenueRequestUrl($url->textContent);
+            if($key <= 10) {
 
-            //Init new curl handle for every link and add it to multi handle
-            $mh = $this->addCurlHandle($mh, curl_init($this->apiURL . $href), $optArray);
+                //get url attributes to query
+                $href = self::getOneVenueRequestUrl($url->textContent);
+
+                //Init new curl handle for every link and add it to multi handle
+                $mh = $this->addCurlHandle($mh, curl_init($this->apiURL . $href), $optArray);
+            }
         }
-
-        $results = array();
 
         do {
             // Launch handles asynchronous execution
@@ -111,7 +118,7 @@ class Supplier1Import extends XMLImport
                 $longitude = $this->getNode($xPathVenue, "//address/longitude");
 
                 //Get resources
-                $resource = $this->getNode($xPathVenue, "//resources/resource/@uri");
+                $resources = $this->getNode($xPathVenue, "//resources/resource/@uri");
 
                 //Get Transport Info
                 $railStation = $this->getNode($xPathVenue, "//transportInfo/railStation");
@@ -121,7 +128,7 @@ class Supplier1Import extends XMLImport
                 $venueId = explode('/', $this->getNode($xPathVenue, '//venue/@href'));
                 $venueId = end($venueId);
 
-                $results[] = array(
+                $venue = new S1Venues(
                     $venueId,
                     $venueName,
                     $locationId,
@@ -130,19 +137,20 @@ class Supplier1Import extends XMLImport
                     $postCode,
                     $latitude,
                     $longitude,
-                    $resource,
+                    $resources,
                     $railStation,
                     $congestion);
+
+                $this->em->persist($venue);
+
 
                 curl_multi_remove_handle($mh, $ch);
                 curl_close($ch);
             }
         } while($running);
 
+        $this->em->flush();
         curl_multi_close($mh);
-
-       return $results;
-
     }
 
     public function getProductions( $id = null ) {

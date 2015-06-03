@@ -129,6 +129,37 @@ class S1Venues
         }
     }
 
+    public function update(
+        $venueId,
+       $venueName,
+       $locationId,
+       $addressLine1,
+       $addressLine2,
+       $postCode,
+       $latitude,
+       $longitude,
+       $resources,
+       $railStation,
+       $inCongestionZone
+    ) {
+        $this->venueId = $venueId;
+        $this->venueName = $venueName;
+        $this->locationId = $locationId;
+        $this->addressLine1 = $addressLine1;
+        $this->addressLine2 = $addressLine2;
+        $this->postCode = $postCode;
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
+        $this->railStation = $railStation;
+        $this->inCongestionZone = $inCongestionZone;
+        $this->resources = $resources;
+        if(!is_array($resources) && $resources !== null) {
+            $this->resources = array($resources);
+        } elseif (is_array($resources)) {
+            $this->resources = $resources;
+        }
+    }
+
     /**
      * Get id
      *

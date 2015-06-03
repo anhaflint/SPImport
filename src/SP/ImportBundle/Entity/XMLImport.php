@@ -31,7 +31,9 @@ abstract class XMLImport implements SupplierImportInterface
      *
      * @param $url
      * @param $request
+     * @param $options
      * @return mixed
+     * @throws \Exception
      */
     public function query($url, $request, $options) {
         $ch = curl_init();
@@ -39,6 +41,14 @@ abstract class XMLImport implements SupplierImportInterface
         curl_setopt($ch, CURLOPT_URL, $url . $request);
 
         $output = curl_exec($ch);
+        $error = (( $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE) ) !== 200) ? true : false;
+
+        // Throw Exception if http code is not 200
+        if($error === true) {
+            $errorMsg = 'Error loading feed : the request returned ' . $httpCode
+                        . ' Using the url : ' . $url . $request;
+            throw new \Exception($errorMsg);
+        }
 
         return $output;
     }
@@ -50,11 +60,19 @@ abstract class XMLImport implements SupplierImportInterface
      * @param $curlHandle
      * @param array $options
      * @return mixed
+     * @throws \Exception
      */
     public function addCurlHandle($multiHandle, $curlHandle, Array $options)
     {
         curl_setopt_array($curlHandle, $options);
-        curl_multi_add_handle($multiHandle, $curlHandle);
+        $errorCode = curl_multi_add_handle($multiHandle, $curlHandle);
+
+        //Error handling : curl_multi_handle return 0 if success
+        $error = ($errorCode !== 0) ? true : false;
+        if( $error === true ) {
+            $errorMsg = 'Error loading curl handle. The process returned ' . $errorCode;
+            throw new \Exception($errorMsg);
+        }
 
         return $multiHandle;
     }
@@ -65,18 +83,30 @@ abstract class XMLImport implements SupplierImportInterface
      * @param \DOMXPath $xPath
      * @param $tagQuery
      * @return array|null|string
+     * @throws \Exception
      */
     public function getNode(\DOMXPath $xPath, $tagQuery)
     {
         $query = $xPath->query($tagQuery);
+        $error = ($query === false) ? true : false;
         $return = null;
+
+        //Print directly if only one item
         if ( $query->length === 1 ) {
             $return = $query->item(0)->textContent;
+
+            //Return array if more than one item
         } elseif ( $query->length > 1) {
             $return = array();
             foreach( $query as $domNode ) {
                 array_push($return, $domNode->textContent);
             }
+        }
+
+        //Error handling if query failed
+        if($error === true) {
+            $errorMsg = 'There was a problem querying the XML feed using : ' . $tagQuery;
+            throw new \Exception($errorMsg);
         }
 
         return $return;

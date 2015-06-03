@@ -41,19 +41,26 @@ class Supplier1Import extends XMLImport
         //Get venue list
         $venues = $this->query($this->getUrl(), 'venue/', $optArray);
 
+
         //Generate Dom Document with venue list
         $domDocument = new \DOMDocument();
-        $domDocument->loadXML($venues);
+        $error = !($domDocument->loadXML($venues));
+        // Could not load all the XML venues
+        if($error === true) {
+            throw new \Exception('Error : could not load all ' . $this->getName() .' venues XML feed');
+        }
 
         $xPathDocument = new \DOMXPath($domDocument);
 
         //Get url list
-        $urlList = $xPathDocument->query("//venue/@href");
+        if( !($urlList = $xPathDocument->query("//venue/@href")) ) {
+            throw new \Exception('Error querying venues : invalid query');
+        }
 
         //Add each link to multi handle to be requested asynchronously
         foreach ($urlList as $key => $url) {
             //get url attributes to query
-            $href = self::getVenueRequestUrl($url->textContent);
+            $href = self::getOneVenueRequestUrl($url->textContent);
 
             //Init new curl handle for every link and add it to multi handle
             $mh = $this->addCurlHandle($mh, curl_init($this->apiURL . $href), $optArray);
@@ -74,7 +81,12 @@ class Supplier1Import extends XMLImport
 
                 //Response to DOMDocument
                 $domVenue = new \DOMDocument();
-                $domVenue->loadXML($xmlContent);
+                $error = !($domVenue->loadXML($xmlContent));
+
+                // Could not load the XML venue
+                if($error === true) {
+                    throw new \Exception('Error : Could not load ' . $this->getName() . '  venue');
+                }
                 $xPathVenue = new \DOMXPath($domVenue);
 
                 //get venue name
@@ -97,7 +109,12 @@ class Supplier1Import extends XMLImport
                 $railStation = $this->getNode($xPathVenue, "//transportInfo/railStation");
                 $congestion = ($this->getNode($xPathVenue, "//transportInfo/inCongestionZone") !== null && $this->getNode($xPathVenue, "//transportInfo/inCongestionZone") === "yes") ? true : false;
 
+                //Venue ID
+                $venueId = explode('/', $this->getNode($xPathVenue, '//venue/@href'));
+                $venueId = end($venueId);
+
                 $results[] = array(
+                    $venueId,
                     $venueName,
                     $locationId,
                     $addressLine1,
@@ -116,7 +133,7 @@ class Supplier1Import extends XMLImport
 
         curl_multi_close($mh);
 
-        print_r($results);
+       return $results;
 
     }
 
@@ -125,7 +142,13 @@ class Supplier1Import extends XMLImport
     }
 
     // ============ Utils ===================
-    public function getVenueRequestUrl($url)
+    /**
+     * returns the request to append to the service url
+     *
+     * @param $url
+     * @return string
+     */
+    public function getOneVenueRequestUrl($url)
     {
         $url = explode('/', $url);
         $venueId = end($url);

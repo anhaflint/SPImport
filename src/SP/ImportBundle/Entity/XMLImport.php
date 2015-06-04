@@ -10,6 +10,13 @@ use Doctrine\ORM\Mapping as ORM;
  */
 abstract class XMLImport implements SupplierImportInterface
 {
+    protected $dispatcher;
+
+    protected $optArray = array(
+        CURLOPT_AUTOREFERER => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HEADER => false
+    );
 
     /**
      * Returns all venues for the supplier
@@ -38,7 +45,7 @@ abstract class XMLImport implements SupplierImportInterface
      * @return mixed
      * @throws \Exception
      */
-    public function query($url, $request, $options) {
+    protected function query($url, $request, $options) {
         $ch = curl_init();
         curl_setopt_array($ch, $options);
         curl_setopt($ch, CURLOPT_URL, $url . $request);
@@ -65,7 +72,7 @@ abstract class XMLImport implements SupplierImportInterface
      * @return mixed
      * @throws \Exception
      */
-    public function addCurlHandle($multiHandle, $curlHandle, Array $options)
+    protected function addCurlHandle($multiHandle, $curlHandle, Array $options)
     {
         curl_setopt_array($curlHandle, $options);
         $errorCode = curl_multi_add_handle($multiHandle, $curlHandle);
@@ -78,6 +85,22 @@ abstract class XMLImport implements SupplierImportInterface
         }
 
         return $multiHandle;
+    }
+
+    /**
+     * Turns a simple DOMNodeList into an array
+     *
+     * @param \DOMNodeList $list
+     * @return array
+     */
+     protected function DOMNodeListToArray(\DOMNodeList $list)
+    {
+        $arrayList = array();
+        foreach($list as $key => $value) {
+            $arrayList[] = $value->textContent;
+        }
+
+        return $arrayList;
     }
 
     /**

@@ -133,85 +133,31 @@ class S1Venues
      */
     private $inCongestionZone;
 
-    public function __construct(
-        $venueId,
-        $venueName,
-        $locationId,
-        $addressLine1,
-        $addressLine2,
-        $postCode,
-        $latitude,
-        $longitude,
-        $resources,
-        $nearestTube,
-        $tubeDirection,
-        $railStation,
-        $busRoutes,
-        $nightRoutes,
-        $carPark,
-        $inCongestionZone
-    ) {
-        $this->venueId = $venueId;
-        $this->venueName = $venueName;
-        $this->locationId = $locationId;
-        $this->addressLine1 = $addressLine1;
-        $this->addressLine2 = $addressLine2;
-        $this->postCode = $postCode;
-        $this->latitude = $latitude;
-        $this->longitude = $longitude;
-        $this->railStation = $railStation;
-        $this->inCongestionZone = $inCongestionZone;
-        $this->resources = $resources;
-        $this->nearestTube = $nearestTube;
-        $this->tubeDirection = $tubeDirection;
-        $this->busRoutes = $busRoutes;
-        $this->nightRoutes = $nightRoutes;
-        $this->carPark = $carPark;
-        if(!is_array($resources) && $resources !== null) {
-            $this->resources = array($resources);
-        } elseif (is_array($resources)) {
-            $this->resources = $resources;
-        }
+    public function __construct(array $venue) {
+        self::update($venue);
     }
 
-    public function update(
-        $venueId,
-        $venueName,
-        $locationId,
-        $addressLine1,
-        $addressLine2,
-        $postCode,
-        $latitude,
-        $longitude,
-        $resources,
-        $nearestTube,
-        $tubeDirection,
-        $railStation,
-        $busRoutes,
-        $nightRoutes,
-        $carPark,
-        $inCongestionZone
-    ) {
-        $this->venueId = $venueId;
-        $this->venueName = $venueName;
-        $this->locationId = $locationId;
-        $this->addressLine1 = $addressLine1;
-        $this->addressLine2 = $addressLine2;
-        $this->postCode = $postCode;
-        $this->latitude = $latitude;
-        $this->longitude = $longitude;
-        $this->railStation = $railStation;
-        $this->inCongestionZone = $inCongestionZone;
-        $this->resources = $resources;
-        $this->nearestTube = $nearestTube;
-        $this->tubeDirection = $tubeDirection;
-        $this->busRoutes = $busRoutes;
-        $this->nightRoutes = $nightRoutes;
-        $this->carPark = $carPark;
-        if(!is_array($resources) && $resources !== null) {
-            $this->resources = array($resources);
-        } elseif (is_array($resources)) {
-            $this->resources = $resources;
+    public function update(array $venue) {
+        $this->venueId = $venue['venueId'];
+        $this->venueName = $venue['venueName'];
+        $this->locationId = $venue['locationId'];
+        $this->addressLine1 = $venue['addressLine1'];
+        $this->addressLine2 = $venue['addressLine2'];
+        $this->postCode = $venue['postCode'];
+        $this->latitude = $venue['latitude'];
+        $this->longitude = $venue['longitude'];
+        $this->railStation = $venue['railStation'];
+        $this->inCongestionZone = $venue['inCongestionZone'];
+        $this->resources = $venue['resources'];
+        $this->nearestTube = $venue['nearestTube'];
+        $this->tubeDirection = $venue['tubeDirection'];
+        $this->busRoutes = $venue['busRoutes'];
+        $this->nightRoutes = $venue['nightRoutes'];
+        $this->carPark = $venue['carPark'];
+        if(!is_array($venue['resources']) && $venue['resources'] !== null) {
+            $this->resources = array($venue['resources']);
+        } elseif (is_array($venue['resources'])) {
+            $this->resources = $venue['resources'];
         }
     }
 

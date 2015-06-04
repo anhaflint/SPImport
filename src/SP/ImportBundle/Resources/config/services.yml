@@ -9,3 +9,8 @@ services:
     sp1.import:
         class: SP\ImportBundle\Entity\Supplier1Import
         arguments: [@doctrine.orm.entity_manager, %supplier1import.name%, %supplier1import.url%, %supplier1import.pwd%, %supplier1import.usr%, %supplier1import.id%]
+
+    import.listener.import_command:
+        class: SP\ImportBundle\Event\ImportListener
+        tags:
+            - { name : import.listener, event: import.event, method: onImportEvent}

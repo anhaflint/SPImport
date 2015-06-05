@@ -12,8 +12,23 @@ use Doctrine\ORM\EntityRepository;
  */
 class S1VenuesRepository extends EntityRepository
 {
-    public function getByVenueId($venueId)
+    public function findAllIds()
     {
+        $queryBuilder = $this->createQueryBuilder('v')
+                            ->select('v.venueId');
+        return $queryBuilder->getQuery()->getResult();
+    }
 
+    public function findLocationByVenueId($venueId)
+    {
+        $qb = $this->createQueryBuilder('v')
+                    ->select('v.locationId')
+                    ->where('v.venueId = :venueId')
+                    ->setParameter('venueId', $venueId);
+
+        $location = $qb->getQuery()->getSingleResult();
+        return $location['locationId'];
     }
 }
+
+

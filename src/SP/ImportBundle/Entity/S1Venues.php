@@ -187,7 +187,7 @@ class S1Venues
     /**
      * Get venueId
      *
-     * @return integer 
+     * @return integer
      */
     public function getVenueId()
     {

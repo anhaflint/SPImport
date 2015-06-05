@@ -18,21 +18,36 @@ class ImportCommand extends ContainerAwareCommand
         $this
             ->setName('sp:import')
             ->setDescription('Import from suppliers into SP database')
-            ->addArgument('supplier', InputArgument::OPTIONAL, 'From which supplier would you like to import data ?');
+            ->addOption('supplier', null, InputOption::VALUE_OPTIONAL, 'From which supplier would you like to import data ?')
+            ->addOption('type', null, InputOption::VALUE_OPTIONAL, 'Which data would you like to import ? venues, productions, performances ? defaults to all.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $supplier = $input->getArgument('supplier');
-        $supplier1 = $this->getApplication()->getKernel()->getContainer()->get('sp1.import');
+        $supplier   = $input->getOption('supplier');
+        $type       = $input->getOption('type');
+        $supplier1  = $this->getApplication()->getKernel()->getContainer()->get('sp1.import');
 
         //Listen to importer events
         $dispatcher = $supplier1->getDispatcher();
-        $listener = new ImportListener();
-        $dispatcher->addListener('import.event', array($listener, 'onConsoleImportEvent'));
+        $listener   = new ImportListener();
+        $dispatcher
+            ->addListener('import.event', array($listener, 'onConsoleImportEvent'));
 
         try {
-            $supplier1->getVenues();
+            switch($type)
+            {
+                case 'venues' :
+                    $supplier1->getVenues();
+                    break;
+                case 'productions' :
+                    $supplier1->getProductions();
+                    break;
+                default :
+                    $supplier1->getVenues();
+                    $supplier1->getProductions();
+                    break;
+            }
         } catch( \Exception $e) {
             $output->writeln($e->getMessage());
         }

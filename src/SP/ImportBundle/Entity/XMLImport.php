@@ -119,13 +119,14 @@ abstract class XMLImport implements SupplierImportInterface
 
         //Print directly if only one item
         if ( $query->length === 1 ) {
-            $return = $query->item(0)->textContent;
+            $return = trim($query->item(0)->textContent);
 
             //Return array if more than one item
         } elseif ( $query->length > 1) {
+
             $return = array();
             foreach( $query as $domNode ) {
-                array_push($return, $domNode->textContent);
+                array_push($return, trim($domNode->textContent));
             }
         }
 

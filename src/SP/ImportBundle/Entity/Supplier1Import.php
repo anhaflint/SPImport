@@ -37,6 +37,14 @@ class Supplier1Import extends XMLImport
 
     //============= Importer Methods ===============
 
+    /**
+     * Gets all venues or the venue requested
+     * by the user from this supplier
+     *
+     * @param null $id
+     * @return bool|mixed
+     * @throws \Exception
+     */
     public function getVenues( $id = null ) {
         //Venues Repository
         $venuesRepository = $this->em->getRepository('SPImportBundle:S1Venues');
@@ -122,6 +130,7 @@ class Supplier1Import extends XMLImport
         $this->em->flush();
         curl_multi_close($mh);
         $this->dispatcher->dispatch(ImportEvents::IMPORT_EVENT, new ImportEvent($this->getName() . ' Import over'));
+        return true;
     }
 
     public function getProductions( $id = null ) {

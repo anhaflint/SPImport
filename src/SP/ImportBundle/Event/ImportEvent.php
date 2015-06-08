@@ -14,11 +14,13 @@ use Symfony\Component\EventDispatcher\Event;
 class ImportEvent extends Event{
     protected $message;
     protected $colour;
+    protected $backgroundColour;
 
-    public function __construct($message, $colour)
+    public function __construct($message, $colour, $bgColour = 'black')
     {
         $this->colour = $colour;
         $this->message = $message;
+        $this->backgroundColour = $bgColour;
     }
 
     public function getMessage()
@@ -29,5 +31,10 @@ class ImportEvent extends Event{
     public function getColour()
     {
         return $this->colour;
+    }
+
+    public function getBackgroundColour()
+    {
+        return $this->backgroundColour;
     }
 }

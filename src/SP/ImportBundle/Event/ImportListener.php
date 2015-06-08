@@ -16,8 +16,8 @@ class ImportListener {
     public function onConsoleImportEvent(ImportEvent $event)
     {
         $output = new ConsoleOutput();
-        $colourStart = '<fg=' . $event->getColour() . '>';
-        $colourEnd = '</fg=' . $event->getColour() . '>';
+        $colourStart = '<fg=' . $event->getColour() . ';bg=' . $event->getBackgroundColour() . '>';
+        $colourEnd = '</fg=' . $event->getColour() . ';bg=' . $event->getBackgroundColour() . '>';
         $message = $event->getMessage();
         if(strpos($message, 'Warning') !== false) {
             $colourStart = '<fg=yellow>';

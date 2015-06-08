@@ -15,7 +15,8 @@ class S1VenuesRepository extends EntityRepository
     public function findAllIds()
     {
         $queryBuilder = $this->createQueryBuilder('v')
-                            ->select('v.venueId');
+                            ->select('v.venueId')
+                            ->orderBy('v.venueId', 'ASC');
         return $queryBuilder->getQuery()->getResult();
     }
 

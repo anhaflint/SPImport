@@ -51,7 +51,7 @@ class Supplier1Import extends XMLImport
         $this->dispatcher
              ->dispatch(
                  ImportEvents::IMPORT_EVENT,
-                 new ImportEvent('Getting venues from ' . $this->getName() . ' supplier...')
+                 new ImportEvent('Getting venues from ' . $this->getName() . ' supplier...', 'white')
              );
 
         //init curl multi handle and notify observers
@@ -59,7 +59,7 @@ class Supplier1Import extends XMLImport
         $this->dispatcher
              ->dispatch(
                  ImportEvents::IMPORT_EVENT,
-                 new ImportEvent('Initiating connexion ')
+                 new ImportEvent('Initiating connexion ', 'white')
              );
 
         //Get venue list
@@ -75,7 +75,7 @@ class Supplier1Import extends XMLImport
         $this->dispatcher
             ->dispatch(
                 ImportEvents::IMPORT_EVENT,
-                new ImportEvent('XML feed received from ' . $this->getName() . 'supplier')
+                new ImportEvent('XML feed received from ' . $this->getName() . 'supplier', 'white')
             );
 
         //Get url list : if $id is null, get all venues, else select the url to load the data from
@@ -98,17 +98,18 @@ class Supplier1Import extends XMLImport
         $this->dispatcher
             ->dispatch(
                 ImportEvents::IMPORT_EVENT,
-                new ImportEvent('Processing XML feed'
+                new ImportEvent('Processing XML feed', 'white'
                 ));
         $urlList = $this->DOMNodeListToArray($urlList);
+        if(is_string($urlList)) $urlList = array($urlList);
         foreach ($urlList as $key => $url) {
-           if($key <= 15) {
+           //if($key <= 15) {
                 //get url attributes to query
                 $href = self::getOneVenueRequestUrl($url);
 
                 //Init new curl handle for every link and add it to multi handle
                 $mh = $this->addCurlHandle($mh, curl_init($this->apiURL . $href), $this->optArray);
-           }
+           //}
         }
 
         // Launch handles asynchronous execution
@@ -134,7 +135,7 @@ class Supplier1Import extends XMLImport
                 $this->dispatcher
                     ->dispatch(
                         ImportEvents::IMPORT_EVENT,
-                        new ImportEvent('Processing one line of data for ' . $venueInfo['venueName'] )
+                        new ImportEvent('Processing one line of data for ' . $venueInfo['venueName'] , 'white')
                     );
                 $venue      = $venuesRepository->findOneBy(array('venueId' => $venueInfo['venueId']));
 
@@ -144,7 +145,7 @@ class Supplier1Import extends XMLImport
                     $this->dispatcher
                         ->dispatch(
                             ImportEvents::IMPORT_EVENT,
-                            new ImportEvent('Updated one entry for venue : ' . $venueInfo['venueId'])
+                            new ImportEvent('Updated one entry for venue : ' . $venueInfo['venueId'], 'white')
                         );
                 } else {
                     //Create a new entry if it doesn't already exist
@@ -152,7 +153,7 @@ class Supplier1Import extends XMLImport
                     $this->dispatcher
                         ->dispatch(
                             ImportEvents::IMPORT_EVENT,
-                            new ImportEvent('Created one entry for venue : ' . $venueInfo['venueId'])
+                            new ImportEvent('Created one entry for venue : ' . $venueInfo['venueId'], 'white')
                         );
                 }
 
@@ -168,7 +169,7 @@ class Supplier1Import extends XMLImport
         $this->dispatcher
              ->dispatch(
                  ImportEvents::IMPORT_EVENT,
-                 new ImportEvent($this->getName() . ' Import over')
+                 new ImportEvent($this->getName() . ' Import over', 'green')
              );
         return true;
     }
@@ -176,9 +177,8 @@ class Supplier1Import extends XMLImport
     public function getProductions( $id = null ) {
         $venuesRepository   = $this->em->getRepository('SPImportBundle:S1Venues');
         $venuesId           = $venuesRepository->findAllIds();
-
         foreach($venuesId as $key => $venue) {
-            $shows = self::getVenueProductions($venue['venueId']);
+           $shows = self::getVenueProductions($venue['venueId']);
         }
 
 
@@ -191,7 +191,7 @@ class Supplier1Import extends XMLImport
         $this->dispatcher
             ->dispatch(
                 ImportEvents::IMPORT_EVENT,
-                new ImportEvent('Getting productions from ' . $this->getName() . ' supplier for venue ' . $venueId)
+                new ImportEvent('Getting productions from ' . $this->getName() . ' supplier for venue ' . $venueId, 'white')
             );
         $showRepository     = $this->em->getRepository('SPImportBundle:S1Productions');
         $venueRepository    = $this->em->getRepository('SPImportBundle:S1Venues');
@@ -210,76 +210,80 @@ class Supplier1Import extends XMLImport
 
         //Init DomDocument and XPathDocument
         $domDocument   = new \DOMDocument();
-        if(!($domDocument->loadXML($shows)))
-            throw new \Exception('Could not load shows XML feed');
-        $xPathShows    = new \DOMXPath($domDocument);
-
-        //Get productions url list
-        $urlList = $this->getNode($xPathShows, '//show/@href');
-
-        foreach($urlList as $url) {
-            $href   = self::getProductionRequestUrl($url);
-            $mh     = $this->addCurlHandle($mh, curl_init($this->apiURL . $href), $this->optArray);
-        }
-
-        do {
-            while(($exec = curl_multi_exec($mh, $running)) == CURLM_CALL_MULTI_PERFORM);
-            if($exec != CURLM_OK) {
-                break;
+        if(!empty($shows)) {
+            if (!($domDocument->loadXML($shows))) {
+                //throw new \Exception('Could not load shows XML feed');
+                libxml_clear_errors();
             }
-            while($ch = curl_multi_info_read($mh)) {
-                $ch = $ch['handle'];
+            $xPathShows = new \DOMXPath($domDocument);
 
-                //Get request response and Generate DOM & Xpath Documents
-                $xmlContent = curl_multi_getcontent($ch);
-                $domShow    = new \DOMDocument();
-                if(!($domShow->loadXML($xmlContent)))
-                    throw new \Exception('Error : Could not load ' . $this->getName() . '  show');
+            //Get productions url list
+            $urlList = $this->getNode($xPathShows, '//show/@href');
 
-                //Get show and check if entry already exists in DB
-                $xPathShow              = new \DOMXPath($domShow);
-                $showInfo               = $this->fillShow($xPathShow);
-                $showInfo['venueId']    = $venueId;
-                $this->dispatcher
-                     ->dispatch(
-                         ImportEvents::IMPORT_EVENT,
-                         new ImportEvent('Processing one line of data for venue ' . $venueId . ' - Production : ' . $showInfo['showName'] )
-                     );
+            if(is_string($urlList)) $urlList = array($urlList);
+            foreach ($urlList as $url) {
+                $href = self::getProductionRequestUrl($url);
+                $mh = $this->addCurlHandle($mh, curl_init($this->apiURL . $href), $this->optArray);
+            }
 
-                $show = $showRepository->findOneBy(array('showId' => $showInfo['showId']));
-
-                if($show !== null) {
-                    //Update the existing entry
-                    $show->update($showInfo);
-                    $this->dispatcher
-                        ->dispatch(
-                            ImportEvents::IMPORT_EVENT,
-                            new ImportEvent('Updated one line of data for production : " ' . $showInfo['showName'] . '"')
-                        );
-                } else {
-                    //Create a new entry if it doesn't already exist
-                    $show = new S1Productions($showInfo, $venue);
-                    $this->dispatcher
-                        ->dispatch(
-                            ImportEvents::IMPORT_EVENT,
-                            new ImportEvent('Created entry for venue ' . $venueId . ' - Production : ' . $showInfo['showName'] )
-                        );
+            do {
+                while (($exec = curl_multi_exec($mh, $running)) == CURLM_CALL_MULTI_PERFORM) ;
+                if ($exec != CURLM_OK) {
+                    break;
                 }
+                while ($ch = curl_multi_info_read($mh)) {
+                    $ch = $ch['handle'];
 
-                // Flush DB and close curl handles
-                $this->em->persist($show);
-                curl_multi_remove_handle($mh, $ch);
-                curl_close($ch);
-            }
-        } while($running);
+                    //Get request response and Generate DOM & Xpath Documents
+                    $xmlContent = curl_multi_getcontent($ch);
+                    $domShow = new \DOMDocument();
+                    if (!($domShow->loadXML($xmlContent)))
+                        throw new \Exception('Error : Could not load ' . $this->getName() . '  show');
 
-        $this->em->flush();
-        $this->dispatcher
-            ->dispatch(
-                ImportEvents::IMPORT_EVENT,
-                new ImportEvent('Finished processing data for venue ' . $venueId )
-            );
+                    //Get show and check if entry already exists in DB
+                    $xPathShow = new \DOMXPath($domShow);
+                    $showInfo = $this->fillShow($xPathShow);
+                    $showInfo['venueId'] = $venueId;
+                    $this->dispatcher
+                        ->dispatch(
+                            ImportEvents::IMPORT_EVENT,
+                            new ImportEvent('Processing one line of data for venue ' . $venueId . ' - Production : ' . $showInfo['showName'], 'white')
+                        );
 
+                    $show = $showRepository->findOneBy(array('showId' => $showInfo['showId']));
+
+                    if ($show !== null) {
+                        //Update the existing entry
+                        $show->update($showInfo);
+                        $this->dispatcher
+                            ->dispatch(
+                                ImportEvents::IMPORT_EVENT,
+                                new ImportEvent('Updated one line of data for production : " ' . $showInfo['showName'] . '"' , 'white')
+                            );
+                    } else {
+                        //Create a new entry if it doesn't already exist
+                        $show = new S1Productions($showInfo, $venue);
+                        $this->dispatcher
+                            ->dispatch(
+                                ImportEvents::IMPORT_EVENT,
+                                new ImportEvent('Created entry for venue ' . $venueId . ' - Production : ' . $showInfo['showName'], 'white')
+                            );
+                    }
+
+                    // Flush DB and close curl handles
+                    $this->em->persist($show);
+                    curl_multi_remove_handle($mh, $ch);
+                    curl_close($ch);
+                }
+            } while ($running);
+
+            $this->em->flush();
+            $this->dispatcher
+                ->dispatch(
+                    ImportEvents::IMPORT_EVENT,
+                    new ImportEvent('Finished processing data for venue ' . $venueId, 'green')
+                );
+        }
         return true;
     }
 
@@ -360,22 +364,23 @@ class Supplier1Import extends XMLImport
     private function fillShow($xPathShow)
     {
         $show = array();
-        $show['showId']                 = self::getShowId($this->getNode($xPathShow, '//show/@href'));
-        $show['showName']               = $this->getNode($xPathShow, '//name');
-        $show['isEvent']                = ($this->getNode($xPathShow, '//isEvent') !== null && $this->getNode($xPathShow, '//isEvent') == 'yes') ? true : false;
-        $show['summary']                = $this->getNode($xPathShow, '//summary');
-        $show['description']            = $this->getNode($xPathShow, '//description');
-        $show['priceFrom']              = $this->getNode($xPathShow, '//priceFrom');
-        $show['priceTo']                = $this->getNode($xPathShow, '//priceTo');
-        $show['ageRestriction']         = $this->getNode($xPathShow, '//ageRestriction');
-        $show['limitedStock']           = ($this->getNode($xPathShow, '//limitedStock') !== null && $this->getNode($xPathShow, '//limitedStock') == 'yes') ? true : false;
-        $show['bookingStarts']          = $this->getNode($xPathShow, '//show/bookingStarts');
-        $show['bookingEnds']            = $this->getNode($xPathShow, '//show/bookingEnds');
-        $show['whitelabelURI']          = $this->getNode($xPathShow, '//whitelabelURI');
-        $show['bannerBackgroundColour'] = $this->getNode($xPathShow, '//bannerBackgroundColour');
-        $show['resources']              = $this->getNode($xPathShow, '//resources/resource/@uri');
-        $show['categories']             = $this->getNode($xPathShow, '//categories');
-        $show['showType']               = $this->getNode($xPathShow, '//showType');
+
+        $show['showId']                 = self::getShowId($this->getNode($xPathShow, '/show/@href'));
+        $show['showName']               = $this->getNode($xPathShow, '/show/name');
+        $show['isEvent']                = ($this->getNode($xPathShow, '/show/isEvent') !== null && $this->getNode($xPathShow, '/show/isEvent') == 'yes') ? true : false;
+        $show['summary']                = $this->getNode($xPathShow, '/show/summary');
+        $show['description']            = $this->getNode($xPathShow, '/show/description');
+        $show['priceFrom']              = $this->getNode($xPathShow, '/show/priceFrom');
+        $show['priceTo']                = $this->getNode($xPathShow, '/show/priceTo');
+        $show['ageRestriction']         = $this->getNode($xPathShow, '/show/ageRestriction');
+        $show['limitedStock']           = ($this->getNode($xPathShow, '/show/limitedStock') !== null && $this->getNode($xPathShow, '//limitedStock') == 'yes') ? true : false;
+        $show['bookingStarts']          = $this->getNode($xPathShow, '/show/bookingStarts');
+        $show['bookingEnds']            = $this->getNode($xPathShow, '/show/bookingEnds');
+        $show['whitelabelURI']          = $this->getNode($xPathShow, '/show/whitelabelURI');
+        $show['bannerBackgroundColour'] = $this->getNode($xPathShow, '/show/bannerBackgroundColour');
+        $show['resources']              = $this->getNode($xPathShow, '/show/resources/resource/@uri');
+        $show['categories']             = $this->getNode($xPathShow, '/show/categories');
+        $show['showType']               = $this->getNode($xPathShow, '/show/showType');
 
         return $show;
     }

@@ -79,9 +79,9 @@ class Supplier1Import extends XMLImport
             );
 
         //Get url list : if $id is null, get all venues, else select the url to load the data from
-        if($id !== null && !is_integer($id)) {
+        if($id !== null && intval($id) === 0) {
             throw new \Exception('Error : The requested $id must be an integer');
-        } elseif ( $id !== null && is_integer($id)) {
+        } elseif ( $id !== null && intval($id) > 0) {
             $urlList = $xPathDocument->query('//venue[contains(@href, "' . $id . '")]/@href');
         } elseif ( $id === null ) {
             $urlList = $xPathDocument->query('//venue/@href');

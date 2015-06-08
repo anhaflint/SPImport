@@ -3,6 +3,8 @@
 namespace SP\ImportBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use SP\ImportBundle\Event\ImportEvent;
+use SP\ImportBundle\Event\ImportEvents;
 
 /**
  * XMLImport
@@ -51,7 +53,15 @@ abstract class XMLImport implements SupplierImportInterface
         curl_setopt($ch, CURLOPT_URL, $url . $request);
 
         $output = curl_exec($ch);
-        $error = (( $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE) ) !== 200) ? true : false;
+        $error = (( $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE) ) !== 200 && ( $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE) ) !== 204 ) ? true : false;
+
+        if($httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE) === 204) {
+            $this->dispatcher
+                 ->dispatch(
+                     ImportEvents::IMPORT_EVENT,
+                     new ImportEvent('Warning : Ignoring one line of data for : ' . $url . $request, 'yellow')
+                 );
+        }
 
         // Throw Exception if http code is not 200
         if($error === true) {

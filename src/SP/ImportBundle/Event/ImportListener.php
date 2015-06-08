@@ -16,7 +16,16 @@ class ImportListener {
     public function onConsoleImportEvent(ImportEvent $event)
     {
         $output = new ConsoleOutput();
-
-        $output->writeln($event->getMessage());
+        $colourStart = '<fg=' . $event->getColour() . '>';
+        $colourEnd = '</fg=' . $event->getColour() . '>';
+        $message = $event->getMessage();
+        if(strpos($message, 'Warning') !== false) {
+            $colourStart = '<fg=yellow>';
+            $colourEnd = '</fg=yellow>';
+        } elseif (strpos($message, 'Error') !== false) {
+            $colourStart = '<fg=red>';
+            $colourEnd = '</fg=red>';
+        }
+        $output->writeln($colourStart . $message . $colourEnd);
     }
 }

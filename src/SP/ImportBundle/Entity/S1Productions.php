@@ -136,15 +136,22 @@ class S1Productions
     private $showType;
 
     /**
+     * @var integer
+     *
+     * @ORM\Column(name="s1VenueId", type="integer")
+     */
+    private $s1VenueId;
+
+    /**
      * @ORM\ManyToOne(targetEntity="SP\ImportBundle\Entity\S1Venues")
      * @ORM\JoinColumn(nullable=false)
      */
-    private $venue;
+    private $spVenue;
 
     public function __construct(array $showInfo, S1Venues $venue)
     {
         self::update($showInfo);
-        $this->setVenue($venue);
+        $this->setSPVenue($venue);
     }
 
     /**
@@ -170,6 +177,7 @@ class S1Productions
         $this->resources = $showInfo['resources'];
         $this->categories = $showInfo['categories'];
         $this->showType = $showInfo['showType'];
+        $this->s1VenueId = $showInfo['venueId'];
     }
 
     /**
@@ -533,9 +541,9 @@ class S1Productions
      * @param \SP\ImportBundle\Entity\S1Venues $venue
      * @return S1Productions
      */
-    public function setVenue(\SP\ImportBundle\Entity\S1Venues $venue)
+    public function setSPVenue(\SP\ImportBundle\Entity\S1Venues $venue)
     {
-        $this->venue = $venue;
+        $this->spVenue = $venue;
 
         return $this;
     }
@@ -545,8 +553,55 @@ class S1Productions
      *
      * @return \SP\ImportBundle\Entity\S1Venues 
      */
-    public function getVenue()
+    public function getSPVenue()
     {
-        return $this->venue;
+        return $this->spVvenue;
     }
+
+    /**
+     * Set showId
+     *
+     * @param integer $showId
+     * @return S1Productions
+     */
+    public function setShowId($showId)
+    {
+        $this->showId = $showId;
+
+        return $this;
+    }
+
+    /**
+     * Get showId
+     *
+     * @return integer 
+     */
+    public function getShowId()
+    {
+        return $this->showId;
+    }
+
+    /**
+     * Set s1VenueId
+     *
+     * @param integer $s1VenueId
+     * @return S1Productions
+     */
+    public function setS1VenueId($s1VenueId)
+    {
+        $this->s1VenueId = $s1VenueId;
+
+        return $this;
+    }
+
+    /**
+     * Get s1VenueId
+     *
+     * @return integer 
+     */
+    public function getS1VenueId()
+    {
+        return $this->s1VenueId;
+    }
+
 }

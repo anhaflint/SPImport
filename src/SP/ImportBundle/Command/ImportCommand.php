@@ -49,7 +49,14 @@ class ImportCommand extends ContainerAwareCommand
                     break;
             }
         } catch( \Exception $e) {
-            $output->writeln($e->getMessage());
+            $colourStart = '';
+            $colourEnd = '';
+            $message = $e->getMessage();
+            if(strpos($message, 'Warning') !== false) {
+                $colourStart = '<fg=red>';
+                $colourEnd = '</fg=red>';
+            }
+            $output->writeln($colourStart . $message . $colourEnd);
         }
     }
 }

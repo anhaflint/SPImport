@@ -1,6 +1,6 @@
 <?php
 
-namespace SP\ImportBundle\Entity;
+namespace SP\ImportBundle\Repository;
 
 use Doctrine\ORM\EntityRepository;
 

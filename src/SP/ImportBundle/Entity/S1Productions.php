@@ -12,7 +12,7 @@ use Symfony\Component\Validator\Constraints\DateTime;
  * S1Productions
  *
  * @ORM\Table()
- * @ORM\Entity(repositoryClass="SP\ImportBundle\Entity\S1ProductionsRepository")
+ * @ORM\Entity(repositoryClass="SP\ImportBundle\Repository\S1ProductionsRepository")
  */
 class S1Productions
 {

@@ -26,4 +26,11 @@ Interface SupplierImportInterface
      * @return mixed
      */
     public function getProductions($id);
+
+    /**
+     * Returns all performances for the supplier
+     *
+     * @return mixed
+     */
+    public function getPerformances();
 }

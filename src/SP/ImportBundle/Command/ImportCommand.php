@@ -45,10 +45,13 @@ class ImportCommand extends ContainerAwareCommand
                 case 'productions' :
                     $supplier1->getProductions($id);
                     break;
-                default :
+                case 'performances' :
+                    $supplier1->getPerformances();
+                    break;
+                default:
                     $supplier1->getVenues();
                     $supplier1->getProductions();
-                    break;
+                    $supplier1->getPerformances();
             }
         } catch( \Exception $e) {
             $colourStart = '';

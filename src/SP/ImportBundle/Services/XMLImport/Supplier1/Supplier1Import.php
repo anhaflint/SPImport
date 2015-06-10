@@ -1,14 +1,13 @@
 <?php
 
-namespace SP\ImportBundle\Entity;
+namespace SP\ImportBundle\Services\XMLImport\Supplier1;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\ORMException;
 use SP\ImportBundle\Event\ImportEvent;
 use SP\ImportBundle\Event\ImportEvents;
-use SP\ImportBundle\Event\ImportListener;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use SP\ImportBundle\Services\XMLImport\XMLImport;
 
 /**
  * Supplier1Import

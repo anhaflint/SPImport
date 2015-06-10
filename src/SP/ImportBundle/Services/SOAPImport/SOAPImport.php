@@ -1,6 +1,6 @@
 <?php
 
-namespace SP\ImportBundle\Entity;
+namespace SP\ImportBundle\Services\SOAPImport;
 
 use Doctrine\ORM\Mapping as ORM;
 

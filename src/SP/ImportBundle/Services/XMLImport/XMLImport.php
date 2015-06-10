@@ -1,11 +1,11 @@
 <?php
 
-namespace SP\ImportBundle\Entity;
+namespace SP\ImportBundle\Services\XMLImport;
 
 use Doctrine\ORM\Mapping as ORM;
 use SP\ImportBundle\Event\ImportEvent;
 use SP\ImportBundle\Event\ImportEvents;
-
+use SP\ImportBundle\Services\SupplierImportInterface;
 /**
  * XMLImport
  *

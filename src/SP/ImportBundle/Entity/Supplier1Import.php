@@ -4,6 +4,7 @@ namespace SP\ImportBundle\Entity;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\ORMException;
 use SP\ImportBundle\Event\ImportEvent;
 use SP\ImportBundle\Event\ImportEvents;
 use SP\ImportBundle\Event\ImportListener;
@@ -67,8 +68,9 @@ class Supplier1Import extends XMLImport
 
         //Generate Dom Document and XPath Document with venue list
         $domDocument    = new \DOMDocument();
-        if( !($domDocument->loadXML($venues)) )
+        if( !($domDocument->loadXML($venues)) ) {
             throw new \Exception('Error : could not load all ' . $this->getName() .' venues XML feed');
+        }
         $xPathDocument  = new \DOMXPath($domDocument);
 
         //Notify observers
@@ -101,23 +103,26 @@ class Supplier1Import extends XMLImport
                 new ImportEvent('Processing XML feed', 'white'
                 ));
         $urlList = $this->DOMNodeListToArray($urlList);
-        if(is_string($urlList)) $urlList = array($urlList);
+
+        //Add all urls to curl multi handle
         foreach ($urlList as $key => $url) {
-           //if($key <= 15) {
+           if($key <= 15) {
                 //get url attributes to query
                 $href = self::getOneVenueRequestUrl($url);
 
                 //Init new curl handle for every link and add it to multi handle
                 $mh = $this->addCurlHandle($mh, curl_init($this->apiURL . $href), $this->optArray);
-           //}
+           }
         }
 
         // Launch handles asynchronous execution
         do {
+            //Get the running boolean of the execution
             while(($exec = curl_multi_exec($mh, $running)) == CURLM_CALL_MULTI_PERFORM);
             if($exec != CURLM_OK) {
                 break;
             }
+            //Execute all urls of the multi handle
             while($ch = curl_multi_info_read($mh)) {
                 $ch = $ch['handle'];
 
@@ -129,7 +134,7 @@ class Supplier1Import extends XMLImport
                 if(!($domVenue->loadXML($xmlContent)))
                     throw new \Exception('Error : Could not load ' . $this->getName() . '  venue');
 
-                //Get venue and check if entry already exists in DB
+                //Get XPathDocument and DOMDocument
                 $xPathVenue = new \DOMXPath($domVenue);
                 $venueInfo  = $this->fillVenue($xPathVenue);
                 $this->dispatcher
@@ -137,8 +142,10 @@ class Supplier1Import extends XMLImport
                         ImportEvents::IMPORT_EVENT,
                         new ImportEvent('Processing one line of data for ' . $venueInfo['venueName'] , 'white')
                     );
-                $venue      = $venuesRepository->findOneBy(array('venueId' => $venueInfo['venueId']));
 
+
+                //Get venue and check if entry already exists in DB
+                $venue = $venuesRepository->findOneBy(array('venueId' => $venueInfo['venueId']));
                 if($venue !== null) {
                     //Update the existing entry
                     $venue->update($venueInfo);
@@ -234,11 +241,7 @@ class Supplier1Import extends XMLImport
 
                 //Getting information for the show
                 $showInfo   = $this->fillShow($xPathShow);
-                $this->dispatcher
-                    ->dispatch(
-                        ImportEvents::IMPORT_EVENT,
-                        new ImportEvent('Processing one line of data for Production : ' . $showInfo['showName'], 'white')
-                    );
+
 
                 //Get venue list for this show
                 $venueList  = $this->getNode($xPathShow, '/show/venues/venue/@href');
@@ -252,6 +255,11 @@ class Supplier1Import extends XMLImport
 
                     //Check if the listed venue exists in DB
                     if($venue !== null) {
+                        $this->dispatcher
+                            ->dispatch(
+                                ImportEvents::IMPORT_EVENT,
+                                new ImportEvent('Processing one line of data for Production : ' . $showInfo['showName'], 'white')
+                            );
                         if ($show !== null) {
                             //If show already exists in DB, update it with new information
                             $show->update($showInfo);
@@ -266,12 +274,19 @@ class Supplier1Import extends XMLImport
                             $this->dispatcher
                                 ->dispatch(
                                     ImportEvents::IMPORT_EVENT,
-                                    new ImportEvent('Created entry for venue ' . $showInfo['venueId'] . ' - Production : ' . $showInfo['showName'], 'cyan')
+                                    new ImportEvent('Created entry for venue ' . self::getId($venueUrl) , 'cyan')
                                 );
                         }
+
+                        // Persist entities
+                        $this->em->persist($show);
+                    } else {
+//                        $this->dispatcher
+//                            ->dispatch(
+//                                ImportEvents::IMPORT_EVENT,
+//                                new ImportEvent('Warning : Could not find venue ' . $showInfo['venueId'] . ' - Production : ' . $showInfo['showName'], 'cyan')
+//                            );
                     }
-                    // Persist entities
-                    $this->em->persist($show);
                 }
                 curl_multi_remove_handle($mh, $ch);
                 curl_close($ch);
@@ -279,6 +294,7 @@ class Supplier1Import extends XMLImport
         } while ($running);
 
         $this->em->flush();
+        curl_multi_close($mh);
         $this->dispatcher
             ->dispatch(
                 ImportEvents::IMPORT_EVENT,
@@ -288,6 +304,127 @@ class Supplier1Import extends XMLImport
         return true;
     }
 
+    /**
+     * Import performances from S1 Supplier
+     *
+     * @return bool
+     * @throws \Exception
+     */
+    public function getPerformances()
+    {
+        $this->dispatcher
+            ->dispatch(
+                ImportEvents::IMPORT_EVENT,
+                new ImportEvent('Starting performances import', 'black', 'white')
+            );
+        $venueRepository    = $this->em->getRepository('SPImportBundle:S1Venues');
+        $showRepository     = $this->em->getRepository('SPImportBundle:S1Productions');
+
+        //Get venues that are actually used from the productions list
+        $venueList = $showRepository->getDistinctVenueId();
+
+        //Get locations id for these venues
+        foreach ($venueList as $key => $venueArray) {
+            $venue = $venueRepository->findOneBy(array('venueId' => $venueArray['s1VenueId']));
+            $venueList[$key]['locationId'] = $venue->getLocationId();
+        }
+
+
+        //init curl multi handle and add the urls
+        $mh = curl_multi_init();
+        foreach($venueList as $key => $venue) {
+            $href   = self::getVenueShowUrl($venue['s1VenueId'], $venue['locationId']);
+            $mh     = $this->addCurlHandle($mh, curl_init($this->apiURL . $href), $this->optArray);
+        }
+
+        do {
+            while ( ($exec = curl_multi_exec($mh, $running) ) == CURLM_CALL_MULTI_PERFORM) ;
+            if ($exec != CURLM_OK) {
+                break;
+            }
+            while ($ch = curl_multi_info_read($mh)) {
+                $ch = $ch['handle'];
+
+                //Get request response and Generate DOM & Xpath Documents
+                $xmlContent     = curl_multi_getcontent($ch);
+                $domVenue       = new \DOMDocument();
+                if (!($domVenue->loadXML($xmlContent)))
+                    throw new \Exception('Error : Could not load ' . $this->getName() . '  show');
+                $xmlVenue = simplexml_import_dom($domVenue);
+
+                //Get show list ids for this venue
+                $showListId = $xmlVenue->xpath('/venue/show/@href');
+                $showListId = (is_string($showListId)) ? array($showListId) : $showListId;
+                $showListId = array_map("self::getId", $showListId);
+
+                //Get venue id
+                $venueId = $xmlVenue->xpath('/venue/@href');
+                $venueId = self::getId((string) $venueId[0]['href']);
+
+                //Get performances for each show in this venue
+                foreach ($showListId as $showId) {
+                    //Get existing show in DB and flush all its performances
+                    $spShow = $showRepository->findOneBy(array('showId' => $showId ));
+                    if($spShow !== null) {
+                        $spShow->flushPerformances($this->em);
+                    }
+
+                    //Get all performances for this show
+                    $showPerformances   = $xmlVenue->xpath('/venue/show[contains(@href, "' . $showId . '")]/performances');
+                    $showPerformances   = $showPerformances[0];
+
+                    //Get the count of performances for this show
+                    $performanceCount  = sizeof($showPerformances);
+
+                    //Get all the performances into the database
+                    foreach($showPerformances as $performance) {
+                        //Store performance in array temporarily
+                        $performanceArray = array(
+                            's1ShowId'  => $showId,
+                            'date'      => (string) $performance['date'] ,
+                            'time'      => (string) $performance['time'] ,
+                            'type'      => (string) $performance['type']
+                        );
+                        $newPerformance = new S1Performances($performanceArray);
+                        $spShow->addPerformance($newPerformance);
+                        $this->em->persist($newPerformance);
+                    }
+                    $this->dispatcher
+                        ->dispatch(
+                            ImportEvents::IMPORT_EVENT,
+                            new ImportEvent('Created ' . $performanceCount . ' performances for show ID ' . $showId, 'cyan')
+                        );
+                }
+
+                $this->dispatcher
+                    ->dispatch(
+                        ImportEvents::IMPORT_EVENT,
+                        new ImportEvent('Finished performance import for venue ' . $venueId, 'green')
+                    );
+                $this->em->flush();
+                curl_multi_remove_handle($mh, $ch);
+                curl_close($ch);
+            }
+        } while ($running);
+
+        try {
+            $this->em->flush();
+            $this->dispatcher
+                ->dispatch(
+                    ImportEvents::IMPORT_EVENT,
+                    new ImportEvent('Finished performance import', 'green')
+                );
+        } catch(\Exception $e) {
+            $this->dispatcher
+                ->dispatch(
+                    ImportEvents::IMPORT_EVENT,
+                    new ImportEvent('Error : an error occured during performances import : ' . $e->getMessage(), 'red')
+                );
+            return false;
+        }
+        curl_multi_close($mh);
+        return true;
+    }
 
 
     // ================================== Venues Utils =========================================
@@ -303,6 +440,25 @@ class Supplier1Import extends XMLImport
         $venueId = end($url);
         $location = $url[sizeof($url) - 2];
         return 'venue/' . $location . '/' . $venueId;
+    }
+
+    /**
+     * Returns the url to append to the base url
+     * to request all shows for a specific venue
+     *
+     * @param $venueId
+     * @param $venueLocation
+     * @return string
+     * @throws \Exception
+     */
+    private function getVenueShowUrl($venueId, $venueLocation)
+    {
+        if($venueId !== null && $venueLocation !== null)
+        {
+            return 'venue/' . $venueLocation . '/' . $venueId . '/show';
+        } else {
+            throw new \Exception('Error : no venue id or location id was given');
+        }
     }
 
     /**
@@ -400,6 +556,19 @@ class Supplier1Import extends XMLImport
         return $show;
     }
 
+    //======================================= Performances utils ================================
+
+    private function fillPerformance(\DOMElement $DOMperformance, $showId)
+    {
+        $performance = array();
+
+        $performance['showId'] = $showId;
+        $performance['type'] = $DOMperformance->getAttribute('type');
+        $performance['date'] = $DOMperformance->getAttribute('date');
+        $performance['time'] = $DOMperformance->getAttribute('time');
+
+        return $performance;
+    }
     //======================================= Getters ===========================================
     /**
      * Get supplierId

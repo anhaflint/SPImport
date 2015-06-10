@@ -12,4 +12,13 @@ use Doctrine\ORM\EntityRepository;
  */
 class S1ProductionsRepository extends EntityRepository
 {
+    public function getDistinctVenueId()
+    {
+        $qb = $this->createQueryBuilder('v')
+                    ->select('v.s1VenueId')
+                    ->distinct()
+                    ->orderBy('v.s1VenueId', 'ASC');
+
+        return $qb->getQuery()->getResult();
+    }
 }

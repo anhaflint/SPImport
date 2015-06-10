@@ -109,7 +109,7 @@ abstract class XMLImport implements SupplierImportInterface
         foreach($list as $key => $value) {
             $arrayList[] = $value->textContent;
         }
-
+        $arrayList = (is_string($arrayList)) ? array($arrayList) : $arrayList;
         return $arrayList;
     }
 

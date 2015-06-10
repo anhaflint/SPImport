@@ -2,6 +2,8 @@
 
 namespace SP\ImportBundle\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints\Date;
 use Symfony\Component\Validator\Constraints\DateTime;
@@ -148,10 +150,16 @@ class S1Productions
      */
     private $spVenue;
 
+    /**
+     * @ORM\OneToMany(targetEntity="SP\ImportBundle\Entity\S1Performances", mappedBy="show", cascade={"persist", "remove"})
+     */
+    private $performances;
+
     public function __construct(array $showInfo, S1Venues $venue)
     {
         self::update($showInfo);
         $this->setSPVenue($venue);
+        $this->performances = new ArrayCollection();
     }
 
     /**
@@ -188,6 +196,57 @@ class S1Productions
     public function getId()
     {
         return $this->id;
+    }
+
+    /**
+     * Get Performances
+     *
+     *
+     * @return ArrayCollection
+     */
+    public function getPerformances()
+    {
+        return $this->performances;
+    }
+
+    /**
+     * Add performance
+     *
+     * @param S1Performances $performance
+     * @return $this
+     */
+    public function addPerformance(S1Performances $performance)
+    {
+        $performance->setShow($this);
+        $this->performances[] = $performance;
+        return $this;
+    }
+
+
+    /**
+     * Remove performance
+     *
+     * @param S1Performances $performance
+     * @return $this
+     */
+    public function removePerformance(S1Performances $performance)
+    {
+        $this->performances->removeElement($performance);
+        return $this;
+    }
+
+    /**
+     * Removes all performances
+     *
+     * @return $this
+     */
+    public function flushPerformances(EntityManager $em)
+    {
+        foreach ($this->performances as $performance) {
+            $this->removePerformance($performance);
+            $em->remove($performance);
+        }
+        return $this;
     }
 
     /**
